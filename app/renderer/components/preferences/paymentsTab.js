@@ -51,6 +51,10 @@ class PaymentsTab extends ImmutableComponent {
     aboutActions.ledgerRecoverWallet(this.state.FirstRecoveryKey, this.state.SecondRecoveryKey)
   }
 
+  recoverWalletFromFile () {
+    aboutActions.ledgerRecoverWalletFromFile()
+  }
+
   copyToClipboard (text) {
     aboutActions.setClipboard(text)
   }
@@ -61,6 +65,7 @@ class PaymentsTab extends ImmutableComponent {
 
   clearRecoveryStatus () {
     aboutActions.clearRecoveryStatus()
+    this.props.hideAdvancedOverlays()
   }
 
   printKeys () {
@@ -297,9 +302,10 @@ class PaymentsTab extends ImmutableComponent {
   }
 
   get ledgerRecoveryContent () {
+    let balance = this.props.ledgerData.get('balance')
     const {SettingsList, SettingItem} = require('../../../../js/about/preferences')
     const l10nDataArgs = {
-      balance: this.props.ledgerData.get('balance')
+      balance: (!balance ? '0.00' : balance)
     }
     const recoverySucceeded = this.props.ledgerData.get('recoverySucceeded')
     const recoveryError = this.props.ledgerData.getIn(['error', 'error'])
@@ -311,7 +317,7 @@ class PaymentsTab extends ImmutableComponent {
         ? <div className='recoveryOverlay'>
           <h1 data-l10n-id='ledgerRecoverySucceeded' />
           <p className='spaceAround' data-l10n-id='balanceRecovered' data-l10n-args={JSON.stringify(l10nDataArgs)} />
-          <Button l10nId='ok' className='whiteButton inlineButton' onClick={this.clearRecoveryStatus} />
+          <Button l10nId='ok' className='whiteButton inlineButton' onClick={this.clearRecoveryStatus.bind(this)} />
         </div>
         : null
       }
@@ -352,6 +358,7 @@ class PaymentsTab extends ImmutableComponent {
     return <div className='panel advancedSettingsFooter'>
       <div className='recoveryFooterButtons'>
         <Button l10nId='recover' className='primaryButton' onClick={this.recoverWallet} />
+        <Button l10nId='recoverFromFile' className='primaryButton' onClick={this.recoverWalletFromFile} />
         <Button l10nId='cancel' className='whiteButton' onClick={this.props.hideOverlay.bind(this, 'ledgerRecovery')} />
       </div>
     </div>

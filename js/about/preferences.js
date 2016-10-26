@@ -1324,6 +1324,15 @@ class AboutPreferences extends React.Component {
     this.updateTabFromAnchor = this.updateTabFromAnchor.bind(this)
   }
 
+  hideAdvancedOverlays () {
+    this.setState({
+      advancedSettingsOverlayVisible: false,
+      ledgerBackupOverlayVisible: false,
+      ledgerRecoveryOverlayVisible: false
+    })
+    this.forceUpdate()
+  }
+
   componentDidMount () {
     window.addEventListener('popstate', this.updateTabFromAnchor)
   }
@@ -1449,7 +1458,8 @@ class AboutPreferences extends React.Component {
           ledgerRecoveryOverlayVisible={this.state.ledgerRecoveryOverlayVisible}
           addFundsOverlayVisible={this.state.addFundsOverlayVisible}
           showOverlay={this.setOverlayVisible.bind(this, true)}
-          hideOverlay={this.setOverlayVisible.bind(this, false)} />
+          hideOverlay={this.setOverlayVisible.bind(this, false)}
+          hideAdvancedOverlays={this.hideAdvancedOverlays.bind(this)} />
         break
       case preferenceTabs.SECURITY:
         tab = <SecurityTab settings={settings} siteSettings={siteSettings} braveryDefaults={braveryDefaults} onChangeSetting={this.onChangeSetting} />

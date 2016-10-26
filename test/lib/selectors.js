@@ -63,6 +63,14 @@ module.exports = {
   paymentsStatus: '.walletStatus',
   ledgerTable: '.ledgerTable',
   bitcoinDashboard: '.bitcoinDashboard',
+  advancedSettingsButton: '[data-l10n-id="advancedSettings"]',
+  backupWallet: '[data-l10n-id="backupLedger"]',
+  recoverWallet: '[data-l10n-id="recoverLedger"]',
+  recoverWalletFromFileButton: '[data-l10n-id="recoverFromFile"]',
+  recoveryOverlayOkButton: '.recoveryOverlay [data-l10n-id="ok"]',
+  saveWalletFile: '[data-l10n-id="saveRecoveryFile"]',
+  balanceRecovered: '[data-l10n-id="balanceRecovered"]',
+  balanceNotRecovered: '.recoveryError',
   modalCloseButton: 'button.close',
   coinbaseBuyButton: '[data-l10n-id="add"]',
   paymentQRCode: '[title="Brave wallet QR code"]',
@@ -74,5 +82,6 @@ module.exports = {
   allowRunInsecureContentButton: '.allowRunInsecureContentButton',
   dismissAllowRunInsecureContentButton: '.dismissAllowRunInsecureContentButton',
   denyRunInsecureContentButton: '.denyRunInsecureContentButton',
-  dismissDenyRunInsecureContentButton: '.dismissDenyRunInsecureContentButton'
+  dismissDenyRunInsecureContentButton: '.dismissDenyRunInsecureContentButton',
+  okButton: '[data-l10n-id="ok"]'
 }
