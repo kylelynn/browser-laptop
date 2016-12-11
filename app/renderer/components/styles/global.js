@@ -91,7 +91,9 @@ const globalStyles = {
     navbarBraveButtonMarginLeft: '80px',
     navbarLeftMarginDarwin: '76px',
     sideBarWidth: '190px',
-    aboutPageSectionPadding: '24px'
+    aboutPageSectionPadding: '24px',
+    defaultIconPadding: '0 2px',
+    defaultTabPadding: '0 4px'
   },
   shadow: {
     switchShadow: 'inset 0 1px 4px rgba(0, 0, 0, 0.35)',

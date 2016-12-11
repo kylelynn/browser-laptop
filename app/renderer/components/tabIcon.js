@@ -29,12 +29,13 @@ const styles = StyleSheet.create({
   'icon': {
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
-    display: 'inline-block',
+    display: 'flex',
     fontSize: '14px',
-    margin: 'auto 7px auto 7px',
     position: 'relative',
-    verticalAlign: 'middle',
-    textAlign: 'center'
+    textAlign: 'center',
+    justifyContent: 'center',
+    width: '16px',
+    padding: globalStyles.spacing.defaultIconPadding
   },
   'blueIcon': {
     color: globalStyles.color.highlightBlue
