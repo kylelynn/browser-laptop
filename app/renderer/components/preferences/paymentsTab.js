@@ -297,21 +297,34 @@ class PaymentsTab extends ImmutableComponent {
     const l10nDataArgs = {
       balance: this.props.ledgerData.get('balance')
     }
+    const recoverySucceeded = this.props.ledgerData.get('recoverySucceeded')
+    const recoveryError = this.props.ledgerData.getIn(['error', 'error'])
+    const isNetworkError = typeof recoveryError === 'object'
+
     return <div className='board'>
       {
-        this.props.ledgerData.get('recoverySucceeded') === true
+        recoverySucceeded === true
         ? <div className='recoveryOverlay'>
-          <h1>Success!</h1>
+          <h1 data-l10n-id='ledgerRecoverySucceeded' />
           <p className='spaceAround' data-l10n-id='balanceRecovered' data-l10n-args={JSON.stringify(l10nDataArgs)} />
           <Button l10nId='ok' className='whiteButton inlineButton' onClick={this.clearRecoveryStatus} />
         </div>
         : null
       }
       {
-        this.props.ledgerData.get('recoverySucceeded') === false
+        (recoverySucceeded === false && recoveryError && isNetworkError)
         ? <div className='recoveryOverlay'>
-          <h1>Recovery failed</h1>
-          <p className='spaceAround'>Please re-enter keys or try different keys.</p>
+          <h1 data-l10n-id='ledgerRecoveryNetworkFailedTitle' />
+          <p data-l10n-id='ledgerRecoveryNetworkFailedMessage' className='spaceAround' />
+          <Button l10nId='ok' className='whiteButton inlineButton' onClick={this.clearRecoveryStatus} />
+        </div>
+        : null
+      }
+      {
+        (recoverySucceeded === false && recoveryError && !isNetworkError)
+        ? <div className='recoveryOverlay'>
+          <h1 data-l10n-id='ledgerRecoveryFailedTitle' />
+          <p data-l10n-id='ledgerRecoveryFailedMessage' className='spaceAround' />
           <Button l10nId='ok' className='whiteButton inlineButton' onClick={this.clearRecoveryStatus} />
         </div>
         : null
