@@ -124,36 +124,56 @@ class NavigationBar extends ImmutableComponent {
     windowActions.setNoScriptVisible(!this.props.noScriptIsVisible)
   }
 
+  get domain () {
+    return tldjs.getDomain(this.props.location)
+  }
+
   get hostPattern () {
-    const getDomain = tldjs.getDomain(this.props.location)
-    return `https?://${getDomain}`
+    return `https?://${this.domain}`
+  }
+
+  get hostSettings () {
+    return this.props.siteSettings.get(this.hostPattern)
+  }
+
+  get validPublisherSynopsis () {
+    // If session is clear then siteSettings is undefined and icon will never be shown,
+    // but synopsis may not be empty. In such cases let's check if synopsis match current domain
+    return !!this.props.synopsis.map(entry => entry.get('site')).includes(this.domain)
+  }
+
+  get validPublisherDomain () {
+    // For sites with i10n such as WikiPedia, publisher location will be different
+    // for each locale and return false, so we need to also check if domain is included
+    return !!this.props.publisherLocation.map(entry => entry.get('publisher')).includes(this.domain)
+  }
+
+  get validPublisherLocation () {
+    // Some publishers are not valid such as Google, Youtube, etc.
+    // They'll never enter on publisherLocation, since ledger itself filter by default
+    return !!this.props.publisherLocation.get(this.props.location)
   }
 
   get enabledPublisher () {
-    const hostSettings = this.props.siteSettings.get(this.hostPattern)
-    return hostSettings && hostSettings.get('ledgerPayments') !== false
+    // If we can't get ledgerPayments, then it's likely that we are
+    // on a clean session. Let's then check for publisher's synopsis
+    return this.hostSettings
+      ? this.hostSettings.get('ledgerPayments') !== false
+      : this.validPublisherSynopsis
+  }
+
+  get visiblePublisher () {
+    // ledgerPaymentsShown is undefined by default until user decide to permanently hide the publisher
+    // so for icon to be shown it can be everything but false
+    const ledgerPaymentsShown = this.hostSettings && this.hostSettings.get('ledgerPaymentsShown')
+    return ledgerPaymentsShown === 'undefined' || ledgerPaymentsShown !== false
   }
 
   get shouldShowAddPublisherButton () {
-    const location = this.props.location
-    const hostSettings = this.props.siteSettings.get(this.hostPattern)
-    const publisherLocation = this.props.publisherLocation
-    // Some publishers are not valid such as Google, Youtube, etc. They'll never enter on publisherLocation
-    // so they're skipped by default. For sites with i10n such as WikiPedia, publisher location will be different
-    // for each locale and return false, so we need to check also if domain is included
-    const validLocation = !!publisherLocation.get(location)
-    const validDomain = !!publisherLocation.map(publishersList => publishersList.includes(tldjs.getDomain(location)))
-
-    if (hostSettings && publisherLocation) {
-      const ledgerPaymentsShown = hostSettings.get('ledgerPaymentsShown')
-      // ledgerPaymentsShown is undefined by default until user decide to perma-hide the publisher
-      // so for icon to be shown it can be everything but false
-      const publisherNotPermaHidden = ledgerPaymentsShown === 'undefined' || ledgerPaymentsShown !== false
-
-      if ((validLocation || validDomain) && publisherNotPermaHidden) {
-        // Only show publisher icon if autoSuggest option is OFF
-        return !getSetting(settings.AUTO_SUGGEST_SITES)
-      }
+    if ((this.validPublisherLocation || this.validPublisherDomain || this.validPublisherSynopsis) &&
+         this.visiblePublisher) {
+      // Only show publisher icon if autoSuggest option is OFF
+      return !getSetting(settings.AUTO_SUGGEST_SITES)
     }
     return false
   }
@@ -174,10 +194,10 @@ class NavigationBar extends ImmutableComponent {
       // There are no blocked scripts, so hide the noscript dialog.
       windowActions.setNoScriptVisible(false)
     }
+    this.shouldShowAddPublisherButton
     // Left Publisher disabled after inserted on Payments
     // until the user toggle enabled payment option
     this.enabledPublisher
-    this.shouldShowAddPublisherButton
   }
 
   render () {
