@@ -135,14 +135,22 @@ class NavigationBar extends ImmutableComponent {
   }
 
   get shouldShowAddPublisherButton () {
+    const location = this.props.location
     const hostSettings = this.props.siteSettings.get(this.hostPattern)
     const publisherLocation = this.props.publisherLocation
+    // Some publishers are not valid such as Google, Youtube, etc. They'll never enter on publisherLocation
+    // so they're skipped by default. For sites with i10n such as WikiPedia, publisher location will be different
+    // for each locale and return false, so we need to check also if domain is included
+    const validLocation = !!publisherLocation.get(location)
+    const validDomain = !!publisherLocation.map(publishersList => publishersList.includes(tldjs.getDomain(location)))
 
     if (hostSettings && publisherLocation) {
       const ledgerPaymentsShown = hostSettings.get('ledgerPaymentsShown')
-      const validPublisher = !!publisherLocation.get(this.props.location)
+      // ledgerPaymentsShown is undefined by default until user decide to perma-hide the publisher
+      // so for icon to be shown it can be everything but false
+      const publisherNotPermaHidden = ledgerPaymentsShown === 'undefined' || ledgerPaymentsShown !== false
 
-      if (validPublisher && ledgerPaymentsShown !== false) {
+      if ((validLocation || validDomain) && publisherNotPermaHidden) {
         // Only show publisher icon if autoSuggest option is OFF
         return !getSetting(settings.AUTO_SUGGEST_SITES)
       }
