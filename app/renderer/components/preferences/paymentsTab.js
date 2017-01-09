@@ -152,6 +152,8 @@ class PaymentsTab extends ImmutableComponent {
     const {LedgerTable} = require('../../../../js/about/preferences')
     // TODO: This should be sortable. #2497
     return <LedgerTable ledgerData={this.props.ledgerData}
+      settings={this.props.settings}
+      onChangeSetting={this.props.onChangeSetting}
       siteSettings={this.props.siteSettings} />
   }
 
