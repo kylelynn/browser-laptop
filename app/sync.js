@@ -25,6 +25,10 @@ const categoryMap = {
   'device': 'PREFERENCES'
 }
 
+const log = (message) => {
+  console.log(`sync ${new Date().getTime()}:`, message)
+}
+
 let deviceId = null /** @type {Array|null} */
 let pollIntervalId = null
 
@@ -61,7 +65,7 @@ const doAction = (sender, action) => {
   }
   // Only accept items who have an objectId set already
   if (!action.item.get('objectId')) {
-    console.log('Missing object ID!', action.item.toJS())
+    log(`Missing object ID! ${action.item.toJS()}`)
     return
   }
   switch (action.actionType) {
@@ -143,11 +147,23 @@ module.exports.onSyncReady = (isFirstRun, e) => {
       }))
   }
   ipcMain.on(messages.GET_EXISTING_OBJECTS, (event, categoryName, records) => {
-    if (categoryNames.includes(categoryName) || !records || !records.length) {
+    log(`getting existing objects for ${records.length} ${categoryName}`)
+    if (!categoryNames.includes(categoryName) || !records || !records.length) {
       return
     }
-    // TODO (Ayumi): get existing objects with objectId, send
-    // RESOLVE_SYNC_RECORDS, handle RESOLVED_SYNC_RECORDS
+    const recordsAndExistingObjects = records.map((record) => {
+      const safeRecord = syncUtil.ipcSafeObject(record)
+      const existingObject = syncUtil.getExistingObject(categoryName, record)
+      return [safeRecord, existingObject]
+    })
+    e.sender.send(messages.RESOLVE_SYNC_RECORDS, categoryName, recordsAndExistingObjects)
+  })
+  ipcMain.on(messages.RESOLVED_SYNC_RECORDS, (event, categoryName, records) => {
+    if (!records || !records.length) {
+      return
+    }
+    log(`got ${records.length} resolved ${categoryName}.`)
+    // TODO (Ayumi): handle RESOLVED_SYNC_RECORDS
   })
   // Periodically poll for new records
   let startAt = appState.getIn(['sync', 'lastFetchTimestamp']) || 0
@@ -179,7 +195,7 @@ module.exports.init = function (initialState) {
   ipcMain.on(messages.SYNC_READY, module.exports.onSyncReady.bind(null,
     !initialState.seed && !initialState.deviceId))
   ipcMain.on(messages.SYNC_DEBUG, (e, msg) => {
-    console.log('sync-client:', msg)
+    log(msg)
   })
 }
 

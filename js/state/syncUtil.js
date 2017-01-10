@@ -4,6 +4,7 @@
 'use strict'
 
 const Immutable = require('immutable')
+const writeActions = require('../constants/sync/proto').actions
 
 const siteSettingDefaults = {
   hostPattern: '',
@@ -17,6 +18,69 @@ const siteSettingDefaults = {
   fingerprintingProtection: false,
   ledgerPayments: true,
   ledgerPaymentsShown: true
+}
+
+/**
+ * Given an objectId and category, return the matching browser object.
+ * @param {Immutable.List} objectId
+ * @param {string} category
+ * @returns {Array} [<number|string>, <Immutable.Map>] e.g. ['https?://www.google.com', {Map of siteSetting}}
+ */
+module.exports.getObjectById = (objectId, category) => {
+  const AppStore = require('../stores/appStore')
+  const appState = AppStore.getState()
+  switch (category) {
+    case 'BOOKMARKS':
+    case 'HISTORY_SITES':
+      return appState.get('sites').findEntry((site, index) => {
+        const itemObjectId = site.get('objectId')
+        return (itemObjectId && itemObjectId.equals(objectId))
+      })
+    case 'PREFERENCES':
+      return appState.get('siteSettings').findEntry((siteSetting, hostPattern) => {
+        const itemObjectId = siteSetting.get('objectId')
+        return (itemObjectId && itemObjectId.equals(objectId))
+      })
+    default:
+      throw new Error(`Invalid object category: ${category}`)
+  }
+}
+
+/**
+ * Given a category and SyncRecord, get an existing browser object.
+ * Used to respond to IPC GET_EXISTING_OBJECTS.
+ * @param {string} categoryName
+ * @param {Object} syncRecord
+ * @returns {Object=}
+ */
+module.exports.getExistingObject = (categoryName, syncRecord) => {
+  const AppStore = require('../stores/appStore')
+  const appState = AppStore.getState()
+  const objectId = new Immutable.List(syncRecord.objectId)
+  const appStoreKeyValue = this.getObjectById(objectId, categoryName)
+  if (!appStoreKeyValue) { return null }
+
+  const existingObject = appStoreKeyValue[1].toJS()
+  let item = undefined
+  switch (categoryName) {
+    case 'BOOKMARKS':
+    case 'HISTORY_SITES':
+      item = this.createSiteData(existingObject)
+      break
+    case 'PREFERENCES':
+      const hostPattern = appStoreKeyValue[0]
+      item = this.createSiteSettingsData(hostPattern, existingObject)
+      break
+    default:
+      throw new Error(`Invalid category: ${categoryName}`)
+  }
+  return {
+    action: writeActions.CREATE,
+    deviceId: appState.getIn(['sync', 'deviceId']),
+    objectData: item.name,
+    objectId: item.objectId,
+    [item.name]: item.value
+  }
 }
 
 /**
@@ -154,4 +218,27 @@ module.exports.createSiteSettingsData = (hostPattern, setting) => {
     objectId: setting.objectId || module.exports.newObjectId(['siteSettings', hostPattern]),
     value
   }
+}
+
+
+/**
+ * Deep modify object Uint8Array into Array.<Number> because IPC can't send
+ * Uint8Array (see brave/sync issue #17). Returns a copy.
+ */
+const deepArrayify = (sourceObject) => {
+  let object = Object.assign({}, sourceObject)
+  const has = Object.prototype.hasOwnProperty.bind(object)
+  for (let k in object) {
+    if (!has(k) || object[k] instanceof Array) { continue }
+    if (object[k] instanceof Uint8Array) {
+      object[k] = Array.from(object[k])
+    } else if (typeof object[k] === 'object') {
+      object[k] = deepArrayify(Object.assign({}, object[k]))
+    }
+  }
+  return object
+}
+
+module.exports.ipcSafeObject = (object) => {
+  return deepArrayify(object)
 }
