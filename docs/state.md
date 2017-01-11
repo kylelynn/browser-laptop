@@ -532,14 +532,6 @@ WindowStore
       error: object              // error object returned
     }
   },
-  publisherLocation: {
-    [url] {                    // Publisher location
-      timestamp: number,
-      protocol: string,        // http or https
-      faviconURL: string,      // URL of the favicon
-      publisher: string        // publisher site, e.g., "https://wikipedia.org/"
-    }
-  },
   publisherInfo: {
     synopsis: [ { // one entry for each publisher having a non-zero `score`
       rank: number,              // i.e., 1, 2, 3, ...

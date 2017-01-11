@@ -133,25 +133,16 @@ class NavigationBar extends ImmutableComponent {
   }
 
   get hostSettings () {
+    // hostPattern is only set if publisher is a valid publisher
+    // sites that not match the criteria would populate siteSettings
+    // with their default protocol
     return this.props.siteSettings.get(this.hostPattern)
   }
 
   get validPublisherSynopsis () {
     // If session is clear then siteSettings is undefined and icon will never be shown,
     // but synopsis may not be empty. In such cases let's check if synopsis match current domain
-    return !!this.props.synopsis.map(entry => entry.get('site')).includes(this.domain)
-  }
-
-  get validPublisherDomain () {
-    // For sites with i10n such as WikiPedia, publisher location will be different
-    // for each locale and return false, so we need to also check if domain is included
-    return !!this.props.publisherLocation.map(entry => entry.get('publisher')).includes(this.domain)
-  }
-
-  get validPublisherLocation () {
-    // Some publishers are not valid such as Google, Youtube, etc.
-    // They'll never enter on publisherLocation, since ledger itself filter by default
-    return !!this.props.publisherLocation.get(this.props.location)
+    return this.props.synopsis.map(entry => entry.get('site')).includes(this.domain)
   }
 
   get enabledPublisher () {
@@ -170,8 +161,7 @@ class NavigationBar extends ImmutableComponent {
   }
 
   get shouldShowAddPublisherButton () {
-    if ((this.validPublisherLocation || this.validPublisherDomain || this.validPublisherSynopsis) &&
-         this.visiblePublisher) {
+    if ((!!this.hostSettings || !!this.validPublisherSynopsis) && this.visiblePublisher) {
       // Only show publisher icon if autoSuggest option is OFF
       return !getSetting(settings.AUTO_SUGGEST_SITES)
     }
@@ -201,7 +191,8 @@ class NavigationBar extends ImmutableComponent {
   }
 
   render () {
-    if (this.props.activeFrameKey === undefined) {
+    if (this.props.activeFrameKey === undefined ||
+        this.props.siteSettings === undefined) {
       return null
     }
 
