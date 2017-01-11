@@ -1592,6 +1592,7 @@ const showEnabledNotifications = () => {
   } else if (reconcileStamp - underscore.now() < 2 * msecs.day) {
     if (sufficientBalanceToReconcile() && (shouldShowNotificationReviewPublishers())) {
       showNotificationReviewPublishers(underscore.now() + msecs.day)
+    }
   }
 }
 
