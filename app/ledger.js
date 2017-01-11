@@ -1578,14 +1578,20 @@ const showDisabledNotifications = () => {
 */
 const showEnabledNotifications = () => {
   const reconcileStamp = ledgerInfo.reconcileStamp
-  if (reconcileStamp && reconcileStamp - underscore.now() < msecs.day) {
+
+  if (!reconcileStamp) return
+
+  if (reconcileStamp - underscore.now() < msecs.day) {
     if (sufficientBalanceToReconcile()) {
       if (shouldShowNotificationReviewPublishers()) {
-        showNotificationReviewPublishers()
+        showNotificationReviewPublishers(reconcileStamp + (ledgerInfo.reconcileFrequency - 2) * msecs.day)
       }
     } else if (shouldShowNotificationAddFunds()) {
       showNotificationAddFunds()
     }
+  } else if (reconcileStamp - underscore.now() < 2 * msecs.day) {
+    if (sufficientBalanceToReconcile() && (shouldShowNotificationReviewPublishers())) {
+      showNotificationReviewPublishers(underscore.now() + msecs.day)
   }
 }
 
@@ -1626,8 +1632,7 @@ const shouldShowNotificationReviewPublishers = () => {
   return !nextTime || (underscore.now() > nextTime)
 }
 
-const showNotificationReviewPublishers = () => {
-  const nextTime = ledgerInfo.reconcileStamp + (ledgerInfo.reconcileFrequency - 1) * msecs.day
+const showNotificationReviewPublishers = (nextTime) => {
   appActions.changeSetting(settings.PAYMENTS_NOTIFICATION_RECONCILE_SOON_TIMESTAMP, nextTime)
 
   reconciliationMessage = reconciliationMessage || locale.translation('reconciliationNotification')
