@@ -4,7 +4,6 @@
 'use strict'
 
 const Immutable = require('immutable')
-const writeActions = require('../constants/sync/proto').actions
 
 const siteSettingDefaults = {
   hostPattern: '',
@@ -24,63 +23,33 @@ const siteSettingDefaults = {
  * Given an objectId and category, return the matching browser object.
  * @param {Immutable.List} objectId
  * @param {string} category
- * @returns {Array} [<number|string>, <Immutable.Map>] e.g. ['https?://www.google.com', {Map of siteSetting}}
+ * @returns {Array} [<Array>, <Immutable.Map>] array is AppStore searchKeyPath e.g. ['sites', 10] for use with updateIn
  */
 module.exports.getObjectById = (objectId, category) => {
   const AppStore = require('../stores/appStore')
   const appState = AppStore.getState()
+  const categoryKey = CATEGORY_APP_STATE_MAP[category]
   switch (category) {
     case 'BOOKMARKS':
     case 'HISTORY_SITES':
-      return appState.get('sites').findEntry((site, index) => {
-        const itemObjectId = site.get('objectId')
-        return (itemObjectId && itemObjectId.equals(objectId))
-      })
+      const items = appState.get('sites')
+      break
     case 'PREFERENCES':
-      return appState.get('siteSettings').findEntry((siteSetting, hostPattern) => {
-        const itemObjectId = siteSetting.get('objectId')
+      const items = appState.get('siteSettings')
+      const object = items.findEntry((siteSetting, hostPattern) => {
+        const itemObjectId = item.get('objectId')
         return (itemObjectId && itemObjectId.equals(objectId))
       })
+      break
     default:
       throw new Error(`Invalid object category: ${category}`)
   }
-}
-
-/**
- * Given a category and SyncRecord, get an existing browser object.
- * Used to respond to IPC GET_EXISTING_OBJECTS.
- * @param {string} categoryName
- * @param {Object} syncRecord
- * @returns {Object=}
- */
-module.exports.getExistingObject = (categoryName, syncRecord) => {
-  const AppStore = require('../stores/appStore')
-  const appState = AppStore.getState()
-  const objectId = new Immutable.List(syncRecord.objectId)
-  const appStoreKeyValue = this.getObjectById(objectId, categoryName)
-  if (!appStoreKeyValue) { return null }
-
-  const existingObject = appStoreKeyValue[1].toJS()
-  let item = undefined
-  switch (categoryName) {
-    case 'BOOKMARKS':
-    case 'HISTORY_SITES':
-      item = this.createSiteData(existingObject)
-      break
-    case 'PREFERENCES':
-      const hostPattern = appStoreKeyValue[0]
-      item = this.createSiteSettingsData(hostPattern, existingObject)
-      break
-    default:
-      throw new Error(`Invalid category: ${categoryName}`)
-  }
-  return {
-    action: writeActions.CREATE,
-    deviceId: appState.getIn(['sync', 'deviceId']),
-    objectData: item.name,
-    objectId: item.objectId,
-    [item.name]: item.value
-  }
+  const items = appState.get(categoryKey)
+  const object = items.find((item) => {
+    const itemObjectId = item.get('objectId')
+    return (itemObjectId && itemObjectId.equals(objectId))
+  })
+  return (object || null)
 }
 
 /**

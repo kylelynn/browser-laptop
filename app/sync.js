@@ -18,12 +18,6 @@ const AppStore = require('../js/stores/appStore')
 const syncUtil = require('../js/state/syncUtil')
 
 const categoryNames = Object.keys(categories)
-const categoryMap = {
-  'bookmark': 'BOOKMARKS',
-  'historySite': 'HISTORY_SITES',
-  'siteSetting': 'PREFERENCES',
-  'device': 'PREFERENCES'
-}
 
 const log = (message) => {
   console.log(`sync ${new Date().getTime()}:`, message)
@@ -45,7 +39,7 @@ const sendSyncRecords = (sender, action, data) => {
   if (!data || !data.length) {
     return
   }
-  const category = categoryMap[data[0].name]
+  const category = syncUtil.CATEGORY_MAP[data[0].name]
   sender.send(messages.SEND_SYNC_RECORDS, category, data.map((item) => {
     if (!item || !item.name || !item.value) {
       return
@@ -82,7 +76,7 @@ const doAction = (sender, action) => {
         [syncUtil.createSiteData(action.item.toJS())])
       break
     case syncConstants.SYNC_CLEAR_HISTORY:
-      sender.send(messages.DELETE_SYNC_CATEGORY, categoryMap.historySite)
+      sender.send(messages.DELETE_SYNC_CATEGORY, syncUtil.CATEGORY_MAP.historySite)
       break
     case syncConstants.SYNC_ADD_SITE_SETTING:
       if (syncUtil.isSyncable('siteSetting', action.item)) {
@@ -162,8 +156,8 @@ module.exports.onSyncReady = (isFirstRun, e) => {
     if (!records || !records.length) {
       return
     }
-    log(`got ${records.length} resolved ${categoryName}.`)
-    // TODO (Ayumi): handle RESOLVED_SYNC_RECORDS
+    log(`applying ${records.length} resolved ${categoryName}.`)
+    for (let record of records) { syncUtil.applySyncRecord(record) }
   })
   // Periodically poll for new records
   let startAt = appState.getIn(['sync', 'lastFetchTimestamp']) || 0
